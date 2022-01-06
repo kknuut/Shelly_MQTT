@@ -155,7 +155,33 @@ class BasePlugin:
          return False
         Domoticz.Debug("Command: " + Command + " (" + str(Level) + ") Color:" + Color)
         device_id = ""
+
+        #Shelly 4PM
         try:
+         device = Devices[Unit] 
+         devname = device.DeviceID
+         if "-gen2-switch-" in devname:
+          cmd = Command.strip().lower()
+          devID, switchid = devname.split("-gen2-switch-",1)
+          onstate = False
+          mqttpath = self.base_topic+"/" + devID + "/rpc"
+          
+          if cmd in ["on","off"]:
+           if cmd == "on":
+            onstate = True
+           else:
+            onstate = False
+          payload = { "id": 1, "src":"domo", "method":"Switch.Set", "params": {"id": switchid, "on":onstate }}
+          
+          try:
+           self.mqttClient.publish(mqttpath, json.dumps(payload))
+           return True
+          except Exception as e:
+           Domoticz.Debug("Error sending MQTT command: " + str(e))
+           return False
+          
+          
+        
          device = Devices[Unit]
          devname = device.DeviceID.replace("shellyplug-s","shellyplugs",1) # ugly fix for ShellyPlug-S "-"
          device_id = devname.split('-') # get device name from DeviceID field
@@ -408,6 +434,26 @@ class BasePlugin:
                  Devices[iUnit].Update(nValue=1,sValue="On")
                except Exception as e:
                  Domoticz.Debug(str(e))
+
+         #ShellyPro 4PM (and other new gen commaunication)
+         if("status" in mqttpath[-2] and "switch:" in mqttpath[-1]):
+          payload =  json.loads( message.replace("'",'"').lower()  )
+          if(not payload):
+           return False
+          unitname = mqttpath[1] + "-gen2-switch-" + str(payload['id'])
+          iUnit = searchdevice(unitname)
+          if iUnit<0: # if device does not exists in Domoticz, than create it
+           devparams = { "Name" : unitname+" Switch", "Unit": iUnit, "TypeName" :"Switch", "Used":0, "DeviceID" : unitname}
+           iUnit = adddevice(**devparams)
+          if iUnit<0:
+           return False
+          
+          if("output" in payload and payload['output'] == True):
+           Devices[iUnit].Update(nValue=1,sValue="On")
+          elif("output" in payload and payload['output'] == False):
+           Devices[iUnit].Update(nValue=0,sValue="Off")
+          return True
+
 
          forceenergydev = False
          # workaround for Shelly Dimmer energy report routing
