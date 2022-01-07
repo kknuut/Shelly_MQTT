@@ -80,6 +80,16 @@ Tested and working with:
  - Shelly Gas
  - Shelly Motion
 
+ - Shelly Pro 4PM (New communication protocol. Partial support:)
+
+You must configure MQTT custom path as following to get it into same topic structure as older units:
+
+shellies/<shelly-ident>
+for eg.  shellies/shellypro4pm-1
+
+"Generic status update over MQTT" should be enabled
+
+
 **I can only support devices that i have. Thank you for your understanding.**
 
 *Power consumption can be enabled in the plugin settings page manually, it's an optional feature without any further support
