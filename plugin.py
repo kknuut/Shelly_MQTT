@@ -414,7 +414,7 @@ class BasePlugin:
          return False
         try:
          topic = str(topic)
-         message = str(message)
+         #message = str(message) #Message = json dict or str already
         except:
          Domoticz.Debug("MQTT message is not a valid string!") #if message is not a real string, drop it
          return False
@@ -437,8 +437,8 @@ class BasePlugin:
 
          #ShellyPro 4PM (and other new gen commaunication)
          if("status" in mqttpath[-2] and "switch:" in mqttpath[-1]):
-          payload =  json.loads( message.replace("'",'"').lower()  )
-          if(not payload):
+          payload =  message #message = json if convert ok, otherwise str
+          if(not payload or type(payload) != dict):
            return False
           unitname = mqttpath[1] + "-gen2-switch-" + str(payload['id'])
           iUnit = searchdevice(unitname)
@@ -833,7 +833,7 @@ class BasePlugin:
                     # {"event":"SS","event_cnt":2}
                     # {"event":"SSS","event_cnt":3}
                     # {"event":"L","event_cnt":4}
-                    payload =  json.loads( message.replace("'",'"').lower() )
+                    payload =  message
                     # Button push event
                     if( "event" in payload ):
                         # Convert event to selector switch strte
@@ -874,7 +874,7 @@ class BasePlugin:
             try:
                     # Update button status
 #                    Domoticz.Debug(">>>> Device action: " + str(message) )
-                    payload =  json.loads( message.replace("'",'"').lower() )
+                    payload =  message
                     # Button push event
                     if ("event" in payload):
                         # Convert event to selector switch state
